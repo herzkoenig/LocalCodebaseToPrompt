@@ -239,6 +239,12 @@
         html.dark .text-yellow-800 {
             color: #ffffaa !important;
         }
+        html.dark .bg-green-500 {
+            background-color: #16a34a !important;
+        }
+        html.dark .bg-green-500:hover {
+            background-color: #15803d !important;
+        }        
         html.dark input,
         html.dark select,
         html.dark textarea {
@@ -312,6 +318,10 @@
                 <button id="folderBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2" data-tippy-content="Click to choose the root folder on your machine.">
                     <i class="fas fa-folder-plus"></i>
                     Select Folder
+                </button>
+                <button id="refreshBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2 hidden" data-tippy-content="Refresh the folder contents without changing selections or settings.">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh Folder
                 </button>
                 <div class="text-gray-600 italic" id="selectedPath" data-tippy-content="Shows the path of the folder you've selected. Empty if none chosen."></div>
             </div>
@@ -726,6 +736,7 @@
             loadingIndicator.classList.toggle('hidden', !isLoading);
             loadingText.textContent = message;
             folderBtn.disabled = isLoading;
+            refreshBtn.disabled = isLoading;
             selectAllBtn.disabled = isLoading;
             combineBtn.disabled = isLoading;
             savePresetBtn.disabled = isLoading;
@@ -748,13 +759,22 @@
 
         function isTextFile(name) {
             const textExtensions = [
-                '.txt', '.md', '.mdx', '.csv', '.js', '.css', '.html', 
+                '.txt', '.md', '.csv', '.js', '.css', '.html', 
                 '.json', '.xml', '.yaml', '.yml', '.ini', '.log',
-                '.sh', '.bash', '.py', '.java', '.kt', '.cpp', '.c', '.h',
+                '.sh', '.bash', '.py', '.java', '.cpp', '.c', '.h',
                 '.config', '.env', '.gitignore', '.sql', '.ts',
                 '.tsx', '.schema', '.mjs', '.cjs', '.jsx', '.rs',
-                '.go', '.php', '.rb', '.toml', '.prisma', '.bat', '.ps1'
+                '.go', '.php', '.rb', '.toml', '.prisma', '.bat', '.ps1',
+                '.svelte', '.lock'
             ];
+             // Check for exact matches for files without extensions
+            const exactMatches = ['Makefile', 'Dockerfile'];
+
+            // First check exact matches
+            if (exactMatches.includes(name)) {
+                return true;
+            }
+            // Then check extensions
             return textExtensions.some(ext => name.toLowerCase().endsWith(ext));
         }
 
@@ -1031,6 +1051,7 @@
                 setLoading(false);
                 loadPresetsFromStorage();
                 applyTooltips();
+                refreshBtn.classList.remove('hidden');
                 const warningDiv = document.getElementById('folderWarning');
                 if (warningDiv) warningDiv.classList.add('hidden');
             } catch (err) {
@@ -1343,6 +1364,52 @@
             }
         });
 
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        refreshBtn.addEventListener('click', async () => {
+            if (!folderHandle) {
+                showGlobalMessage('Please select a folder first before refreshing.', 'error');
+                return;
+            }
+
+            // Store current selections
+            const selectedPaths = new Set(
+                Array.from(fileTree.querySelectorAll('input[type="checkbox"]:checked[data-type="file"]'))
+                    .map(cb => cb.dataset.path)
+            );
+
+            // Clear current tree and handles
+            fileTree.innerHTML = '';
+            fileHandles = [];
+            pathToElement = {};
+
+            // Rescan folder
+            setLoading(true, 'Refreshing folder contents...');
+            try {
+                await tryReadGitignore(folderHandle);
+                await buildFileTree(folderHandle);
+
+                // Restore selections
+                const checkboxes = fileTree.querySelectorAll('input[type="checkbox"][data-type="file"]');
+                checkboxes.forEach(cb => {
+                    if (selectedPaths.has(cb.dataset.path)) {
+                        cb.checked = true;
+                    }
+                });
+
+                updateFolderCheckboxes();
+                updateTally();
+                refreshBtn.classList.remove('hidden');
+                showGlobalMessage('Folder refreshed successfully!', 'success');
+                applyTooltips();
+            } catch (err) {
+                console.error('Error refreshing folder:', err);
+                showGlobalMessage('Error refreshing folder: ' + err.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
         savePresetBtn.addEventListener('click', savePreset);
         loadPresetBtn.addEventListener('click', loadPreset);
         deletePresetBtn.addEventListener('click', deletePreset);
@@ -1425,16 +1492,6 @@
             });
             updateFolderCheckboxes();
         }
-
-        folderBtn.addEventListener('click', async () => {
-            try {
-                folderHandle = await window.showDirectoryPicker();
-                document.getElementById('folderWarning').classList.add('hidden');
-            } catch (err) {
-                console.error('Error selecting folder:', err);
-                document.getElementById('folderWarning').classList.remove('hidden');
-            }
-        });
 
         const fileTypePatterns = {
             js: [".js", ".mjs", ".cjs"],
