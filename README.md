@@ -1,196 +1,54 @@
-# Your Source to Prompt (Securely, On Your OWN Machine!)
+# LocalCodebaseToPrompt
 
+This project began as a single, ingenious `.html` file designed to help users combine local code files into a single prompt for Large Language Models (LLMs), running entirely securely on their own machine. You can find the spirit of the original concept in many tools that aimed to solve this common problem.
 
-Wait, ANOTHER tool to take code files and turn them into a single prompt file for Large Language Models? How many tools like this does the world need?! There are already so many:
+As "LocalCodebaseToPrompt" grew with more features and capabilities, its single-file nature became a bit unwieldy. This version represents an **extension and refactoring** of that core idea.
 
-1. [files-to-prompt](https://github.com/simonw/files-to-prompt)
-2. [repo2txt](https://repo2txt.simplebasedomain.com/)
-3. [code2prompt](https://github.com/mufeedvh/code2prompt)
-4. [repomix](https://github.com/yamadashy/repomix)
-5. [ingest](https://github.com/sammcj/ingest)
-6. [1filellm](https://github.com/jimmc414/1filellm)
-7. [repo2file](https://github.com/artkulak/repo2file)
+## Key Changes & Enhancements
 
-… and others keep cropping up. Yet, **Your Source to Prompt** stands out with a unique set of capabilities that address many pain points these existing tools don’t fully resolve.
+*   **Modular Structure**: The primary change is the separation of the original monolithic HTML file into:
+    *   `index.html`: The main application structure.
+    *   `style.css`: All styling rules.
+    *   `script.js`: The core JavaScript logic.
+    This makes the project more maintainable and easier to understand.
+*   **Enhanced File Handling**:
+    *   Visual folder and file selection.
+    *   Support for `.gitignore` patterns and user-defined text file extensions.
+    *   Folder-level statistics (file and line counts) in the tree view.
+*   **Advanced Output Customization**:
+    *   Include custom preambles and goals with your prompt.
+    *   Option to remove code comments.
+    *   Minify output (JS, CSS, HTML, JSON) to save space.
+    *   Automatic generation of a project structure summary.
+*   **User Experience**:
+    *   Dark mode and a user-friendly interface with tooltips.
+    *   Real-time tally of selected file sizes and lines, with context window warnings.
+    *   String-based filtering and quick-select buttons for file types.
+*   **Presets**: Save and load selections and settings (`localStorage` or JSON export/import) for frequently used configurations.
+*   **Purely Local & Secure**: Your code never leaves your machine. No server-side processing, no installation, no dependencies beyond a modern browser.
 
-In fact, I made it for myself to scratch my own itch, because I was wasting so much time using other tools that caused me to repeat myself over and over, or which made it difficult to work with private repos.
+## How to Use
 
-## Screenshots of it in Action (Click to see larger versions):
-|                               |                               |
-|-------------------------------|-------------------------------|
-| *Choose files visually:* ![Screenshot 1](https://raw.githubusercontent.com/Dicklesworthstone/your-source-to-prompt.html/refs/heads/main/screenshots/screenshot_1.png) | *String filters and quick select options:* ![Screenshot 2](https://raw.githubusercontent.com/Dicklesworthstone/your-source-to-prompt.html/refs/heads/main/screenshots/screenshot_2.png) |
-| *Add preamble text and goals; save and load presets:* ![Screenshot 3](https://raw.githubusercontent.com/Dicklesworthstone/your-source-to-prompt.html/refs/heads/main/screenshots/screenshot_3.png) | *Easily save the final output text as a file or copy to clipboard:* ![Screenshot 4](https://raw.githubusercontent.com/Dicklesworthstone/your-source-to-prompt.html/refs/heads/main/screenshots/screenshot_4.png) |
-
----
-
-## Overview
-
-**Your Source to Prompt** is a single `.html` file that, when opened in a modern browser (like Chrome), provides a complete GUI to easily select code files and combine them into a single text output. The key innovation is that it runs entirely in your browser, with no external dependencies or services. It’s:
-
-- **Local and Secure**: Your code never leaves your machine.
-- **No Installation Hassles**: No Python, no Node.js, no CLI fiddling. Just a single, self-contained HTML file that you open in any modern browser and then it "just works."
-- **Works with Any Folder**: Not limited to Git repos.
-- **Optimized for Repeated Use**: Save and load presets of file selections and settings.
-
-This tool is all about letting you focus on your actual LLM-driven coding tasks without wrestling with complex pipelines or risking your code’s privacy.
-
----
-
-## Key Advantages
-
-1. **Fully Local & Secure**: Just open the `.html` file. The modern File System Access API lets you read from your local drive directly. No server, no GitHub auth tokens, no privacy concerns.
-
-2. **No Dependencies**: Requires only a recent Chromium-based browser. No installations, no package managers.
-
-3. **Use with Any Folder or Repo**: Perfect for private codebases or just a random set of files you want to show the LLM.
-
-4. **Presets to Save Time**: Preset functionality lets you store your favorite file selections and reload them instantly. Save to `localStorage` or export/import as JSON.
-
-5. **Efficient File Selection**:
-   - String-based filtering to quickly find files.
-   - Convenient mass selection (e.g., “Select all React files”).
-   - Toggle all text files with one click.
-   
-6. **Context Size Awareness**: A tally of total size and lines is always visible, with warnings if you’re likely to exceed context windows (like GPT-4 or Claude limits).
-
-7. **Hierarchical Structure Preview**: Automatically includes a tree-like structure showing file sizes and line counts before the code listings, providing vital context to the LLM.
-
-8. **Minification to Save Space**: Optionally minify JS, CSS, HTML, JSON, and even trim other text files for maximum context efficiency.
-
-9. **Custom Preamble & Goal**: Prepend your combined output with a preamble and a stated goal so the LLM understands the context and your intentions before reading the code.
-
-10. **Export/Import Presets**: Share or backup your presets easily so you don't need to waste time selecting the same complex grouping of files over and over again!
-
-11. **User Friendly UI with Dark Mode**: It looks nice and is easy to get started, with comprehensive tooltips explaining what everything does.
-
----
-
-## How It Works Under the Hood
-
-### Browser File System Access API
-
-- On clicking "Select Folder," the tool uses the File System Access API to prompt you for a local directory.
-- Once granted, it reads the contents of that directory (and subdirectories), filtering out ignored files (via `.gitignore` or default patterns).
-- Everything happens locally, in-browser.
-
-### Building the File Tree
-
-- The tool scans your chosen folder, recursively enumerating files and directories.
-- `.gitignore` patterns are applied to skip irrelevant files.
-- Files are displayed in a nested tree structure.
-- Text files (based on known extensions) get checkboxes, so you can select which ones to include in the final prompt.
-
-### Preset Management
-
-- Selections and configurations are stored in `localStorage` as JSON.
-- Name and save a preset to quickly restore a known configuration.
-- Export and import presets to/from a `.json` file for portability.
-
-### Context Warnings
-
-- The UI calculates total selected size and line count as you select files.
-- Approximate warnings appear if you exceed thresholds likely to cause trouble with certain LLM contexts.
-
-### Preamble & Goal
-
-- Preamble: A custom introduction or explanation.
-- Goal: A concise statement of what you want to achieve.
-- These help frame the LLM prompt so that the code is contextualized and not just dropped in cold.
-
-### Minification Steps
-
-- Uses client-side libraries:
-  - **Terser** for JS/TS minification.
-  - **csso** for CSS.
-  - **html-minifier-terser** for HTML.
-  - JSON is re-serialized to a single line.
-  - Other text files have trailing whitespace trimmed.
-  
-This process helps fit larger codebases into the LLM’s context window, and it tells you the space savings so you can decide if it's worth it.
-
----
-
-## How to Use the Tool Step-by-Step
-
-1. **Get the HTML File**: Download `your-source-to-prompt.html` from this repository to your computer.
-
-2. **Open it in Chrome**:  
-   Just double-click or drag it into your browser.
-
-3. **Select a Folder**:  
-   Click "Select Folder," choose your code directory. The tool will load and display your files.
-
-4. **Filter and Select Files**:  
-   Use the search bar to quickly find files by name. Use the quick-select buttons to grab all files of a certain type. Toggle all text files if that’s easier.
-
-5. **Set Up Preamble and Goal (Optional)**:  
-   If desired, enable preamble and goal options and enter your custom text.
-
-6. **Minify Output (Optional)**:  
-   Check the minify box to reduce file size. This can help when dealing with large projects.
-
-7. **Check the Tally**:  
-   The total selected size and line count appear in the top-right corner. Heed the warnings if any appear.
-
-8. **Save a Preset (Optional)**:  
-   If you want to reuse these selections and settings, enter a name and click "Save Preset." You can load it next time without re-selecting everything.
-
-9. **Combine Files**:  
-   Click "Combine Selected Files." The tool generates a single text output containing:
-   - Your preamble (if any)
-   - Your goal (if any)
-   - A hierarchical summary of selected files
-   - Each file preceded by a header line with the filename
-
-10. **Copy or Download the Result**:  
-    Use the provided buttons to copy the combined text to your clipboard or download it as a `.txt` file. Paste it into your LLM prompt and start working!
-
----
-
-## Example Workflow
-
-**Scenario**: You want your LLM to help refactor a Node.js API.
-
-1. Open `your-source-to-prompt.html` in Chrome.
-2. Select your project folder.
-3. Filter by "api" to find backend files quickly.
-4. Use file type filters to select all `.js` files.
-5. Enable the preamble: "Below are the main API files from my Node.js project..."
-6. Add a goal: "Goal: Refactor the API handlers to follow better error-handling patterns."
-7. Enable Minify Output to save space.
-8. Combine the files.
-9. Copy the output and paste into the LLM’s prompt.
-
-Now the LLM sees a well-structured, minimized project context along with your stated goal, all fully local and secure.
-
----
-
-## Technical Details & Maintenance
-
-- Written in pure HTML/JS with TailwindCSS for styling and Tippy.js for tooltips.
-- Uses browser-based libraries from CDNs for minification and UI enhancements.
-- Data never leaves your machine.
-- Works best in Chromium-based browsers supporting the File System Access API.
-- Presets stored in `localStorage`; easily exported/imported as JSON.
-
----
+1.  **Download the Files**: Get `index.html`, `style.css`, and `script.js` from the **LocalCodebaseToPrompt** repository and place them in the same folder on your computer.
+2.  **Open in Browser**: Open `index.html` in a modern Chromium-based browser (like Chrome or Edge).
+3.  **Select Folder**: Click "Select Folder" to choose your project directory.
+4.  **Filter & Select**: Use the file tree, filters, and selection buttons to choose the files for your prompt. Add custom text file extensions if needed.
+5.  **Customize (Optional)**: Add a preamble, goal, remove comments, or enable minification.
+6.  **Save Preset (Optional)**: If you'll reuse this setup, save it as a preset.
+7.  **Combine**: Click "Combine Selected Files."
+8.  **Use Output**: Copy the generated text or download it as a file to use with your LLM.
 
 ## Browser Compatibility
 
-For best results, use a Chromium-based browser like Chrome. This ensures full support for the File System Access API. Other browsers (Firefox, Safari) may not support the directory access features yet.
+For best results, use a Chromium-based browser (Chrome, Edge, Opera, etc.) that fully supports the File System Access API, which is crucial for local folder access.
 
 ---
 
-## Conclusion
-
-**Your Source to Prompt** may be one of many such tools, but it offers a unique combination of local operation, no-install convenience, powerful preset management, efficient file selection, minification, and thoughtful UI enhancements. It lets you quickly and securely create a well-structured prompt context for your LLM, making your AI-driven coding sessions more streamlined and effective.
-
-License: MIT License Applies 
-
+License: MIT License Applies
 
 ---
 
-Thanks for your interest in my open-source project! I hope you find it useful. You might also find my commercial web apps useful, and I would really appreciate it if you checked them out:
+Thanks for your interest in my open-source project! I hope you find **LocalCodebaseToPrompt** useful. You might also find my commercial web apps useful, and I would really appreciate it if you checked them out:
 
 **[YoutubeTranscriptOptimizer.com](https://youtubetranscriptoptimizer.com)** makes it really quick and easy to paste in a YouTube video URL and have it automatically generate not just a really accurate direct transcription, but also a super polished and beautifully formatted written document that can be used independently of the video.
 
