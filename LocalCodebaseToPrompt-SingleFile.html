@@ -1,0 +1,318 @@
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Codebase To Prompt</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light-border.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <script type="module">class G{constructor(t){this.patterns=[],t.split(`
+`).map(s=>s.trim()).filter(s=>s&&!s.startsWith("#")).forEach(s=>{const o=s.startsWith("!");s=o?s.slice(1):s,s=s.replace(/\/+$/,"");const i=s.startsWith("/");s=s.replace(/^\/+/,"");let l=s.replace(/\./g,"\\.").replace(/\*\*/g,"{{GLOBSTAR}}").replace(/\*/g,"[^/]*").replace(/\?/g,"[^/]").replace(/{{GLOBSTAR}}/g,".*").replace(/\/$/,""),c=i?`^${l}(?:$|/)`:`(?:^|/)${l}(?:$|/)`;this.patterns.push({regex:new RegExp(c),isNegation:o,original:s})}),["^.git(?:$|/)","^.husky(?:$|/)","^.vscode(?:$|/)","^node_modules(?:$|/)","^\\.next(?:$|/)","^out(?:$|/)","^build(?:$|/)","^coverage(?:$|/)","\\.DS_Store$","\\.env\\.*","\\.pnp\\.*","\\.yarn/*","\\.vercel(?:$|/)","\\.tsbuildinfo$","^next-env\\.d\\.ts$"].forEach(s=>{this.patterns.push({regex:new RegExp(s),isNegation:!1,original:s})})}ignores(t){t=t.replace(/^\/+/,"").replace(/\/+$/,"");let e=!1;for(const s of this.patterns)s.regex.test(t)&&(e=!s.isNegation);return e}debugPattern(t){const e=[];for(const s of this.patterns)s.regex.test(t)&&e.push({pattern:s.original,isNegation:s.isNegation,regex:s.regex.toString()});return e}}const me=document.getElementById("folderBtn"),ne=document.getElementById("selectedPath"),U=document.getElementById("gitignoreStatus"),f=document.getElementById("fileTree"),fe=document.getElementById("selectAllBtn"),pe=document.getElementById("combineBtn"),se=document.getElementById("output"),Z=document.getElementById("combinedOutput"),Pe=document.getElementById("downloadBtn"),we=document.getElementById("copyBtn"),Te=document.getElementById("loadingIndicator"),D=document.getElementById("loadingText"),oe=document.getElementById("presetName"),he=document.getElementById("savePresetBtn"),ge=document.getElementById("loadPresetBtn"),ye=document.getElementById("deletePresetBtn"),M=document.getElementById("presetSelect");document.getElementById("missingFilesAlert");const xe=document.getElementById("exportPresetsBtn"),X=document.getElementById("importPresetsInput"),T=document.getElementById("includePreamble"),be=document.getElementById("preambleOptions"),w=document.getElementById("preambleSelect"),F=document.getElementById("customPreamble"),$=document.getElementById("includeGoal"),Ee=document.getElementById("goalOptions"),N=document.getElementById("goalText"),_=document.getElementById("filterInput"),ve=document.getElementById("clearFilterBtn"),ie=document.getElementById("totalSizeDisplay"),le=document.getElementById("totalLinesDisplay"),K=document.getElementById("tallyWarning"),ke=document.getElementById("clearFilterSelectionsBtn"),Be=document.querySelectorAll("button[data-filter-type]"),Y=document.getElementById("minifyOutput"),V=document.getElementById("minifyStats"),z=document.getElementById("removeComments"),Q=document.getElementById("commentStats"),ce=document.getElementById("darkModeToggle");ce.addEventListener("click",()=>{const n=document.documentElement.classList.toggle("dark");localStorage.setItem("darkModeEnabled",n?"true":"false"),ce.innerHTML=n?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>'});let A=[],E=null,W=null,v={},I=new Set,j=[];function Fe(){const n=localStorage.getItem("userAddedTextExtensions");n&&(j=JSON.parse(n))}function $e(){localStorage.setItem("userAddedTextExtensions",JSON.stringify(j))}Fe();function p(n,t="error"){const e=document.getElementById("globalMessage");e.textContent=n,e.classList.remove("hidden","bg-red-100","text-red-700","bg-green-100","text-green-700"),e.classList.add("rounded-lg","p-4","text-sm","shadow-lg"),t==="error"?e.classList.add("bg-red-100","text-red-700"):e.classList.add("bg-green-100","text-green-700"),setTimeout(()=>{e.classList.add("hidden")},5e3)}T.addEventListener("change",()=>{be.classList.toggle("hidden",!T.checked)});w.addEventListener("change",()=>{F.value=w.value==="custom"?"":w.value});$.addEventListener("change",()=>{Ee.classList.toggle("hidden",!$.checked)});function S(n,t="Processing folder contents..."){Te.classList.toggle("hidden",!n),D.textContent=t,me.disabled=n,q.disabled=n,fe.disabled=n,pe.disabled=n,he.disabled=n,ge.disabled=n,ye.disabled=n,xe.disabled=n,X.disabled=n,T.disabled=n,w.disabled=n,F.disabled=!!n,$.disabled=n,N.disabled=!!n,_.disabled=n,ve.disabled=n,ke.disabled=n,Be.forEach(o=>o.disabled=n),Y.disabled=n,z.disabled=n;const e=document.getElementById("customTextExtensionsInput"),s=document.getElementById("addCustomTextExtensionsBtn");e&&(e.disabled=n),s&&(s.disabled=n)}function Se(n){const e=[".txt",".md",".csv",".js",".css",".html",".json",".xml",".yaml",".yml",".ini",".log",".sh",".bash",".py",".java",".cpp",".c",".h",".config",".env",".gitignore",".sql",".ts",".tsx",".schema",".mjs",".cjs",".jsx",".rs",".go",".php",".rb",".toml",".prisma",".bat",".ps1",".svelte",".lock"].concat(j);return["Makefile","Dockerfile"].includes(n)?!0:e.some(o=>n.toLowerCase().endsWith(o))}async function ee(n){try{const s=await(await(await n.getFileHandle(".gitignore")).getFile()).text();return s.trim()===""?(U.textContent=".gitignore found but empty",W=new G(".git/"),!0):(W=new G(s+`
+.git/`),U.textContent=".gitignore found and applied",!0)}catch{return W=new G(".git/"),U.textContent="Using default ignore patterns",!0}}async function je(n){const t=await n.getFile(),e=t.size;let s=0;return Se(n.name)&&(s=(await t.text()).split(`
+`).length),{size:e,lines:s}}async function J(n,t="",e=f,s=0){let o=0,i=0;const l=[];s===0&&(D.textContent="Processing folder contents... (0 items found)");let c=0;for await(const d of n.values())l.push(d),c++,c%100===0&&(D.textContent=`Processing folder contents... (${c} items scanned in current directory level)`);l.sort((d,u)=>d.kind===u.kind?d.name.localeCompare(u.name):d.kind==="directory"?-1:1);for(let d=0;d<l.length;d++){const u=l[d],b=t?`${t}/${u.name}`:u.name;if(W&&W.ignores(b))continue;const B=d===l.length-1,y=document.createElement("div");if(y.className=`tree-line ${B?"tree-last":""}`,s>0&&y.classList.add("tree-indent"),v[b]=y,u.kind==="directory"){const x=document.createElement("div");x.className="font-bold mb-1 folder-name flex items-center gap-2";const a=document.createElement("input");a.type="checkbox",a.className="mr-2",a.dataset.path=b,a.dataset.type="directory",a.setAttribute("data-tippy-content","Check/uncheck this folder to select/deselect all its text files."),x.appendChild(a);const r=document.createElement("span");r.textContent=`📁 ${u.name}`,r.setAttribute("data-tippy-content","Folder in your project. Check its box to select all files inside."),x.appendChild(r),y.appendChild(x);const m=document.createElement("div");y.appendChild(m);const h=await n.getDirectoryHandle(u.name),g=await J(h,b,m,s+1);g.textFileCount>0&&(r.textContent+=` (Files: ${g.textFileCount}, Lines: ${g.totalLineCount.toLocaleString()})`),o+=g.textFileCount,i+=g.totalLineCount}else{const x=await n.getFileHandle(u.name),{size:a,lines:r}=await je(x),m=Se(u.name);m&&(A.push({handle:x,path:b,size:a,lines:r}),o++,i+=r);const h=document.createElement("div");if(h.className="flex items-center mb-1",m){const P=document.createElement("input");P.type="checkbox",P.className="mr-2",P.dataset.path=b,P.dataset.type="file",P.setAttribute("data-tippy-content","Check this file to include it in the combined output."),h.appendChild(P)}const g=document.createElement("span");g.className=m?"text-gray-800":"text-gray-400",m?(g.textContent=`📄 ${u.name} (${(a/1024).toFixed(2)} KB | ${r.toLocaleString()} lines)`,g.setAttribute("data-tippy-content","A selectable text file. Check to include in the combined output.")):(g.textContent=`📄 ${u.name} (non-text file)`,g.setAttribute("data-tippy-content","Non-text file; cannot be included in the combined output.")),h.appendChild(g),y.appendChild(h)}e.appendChild(y)}return{textFileCount:o,totalLineCount:i}}function k(n,t="error"){const e=document.getElementById("presetMessage");e.textContent=n,e.classList.remove("hidden","bg-red-100","text-red-700","bg-green-100","text-green-700"),e.classList.add("error-message"),t==="error"?e.classList.add("bg-red-100","text-red-700"):e.classList.add("bg-green-100","text-green-700"),setTimeout(()=>{e.classList.add("hidden")},5e3)}function H(){M.innerHTML='<option value="">Select a preset</option>';const n=JSON.parse(localStorage.getItem("presets")||"{}");Object.keys(n).forEach(t=>{const e=document.createElement("option");e.value=t,e.textContent=t,M.appendChild(e)})}function Ae(){const n=oe.value.trim();if(!n){k("Please enter a preset name.");return}const e={files:Array.from(f.querySelectorAll('input[type="checkbox"]:checked[data-type="file"]')).map(o=>o.dataset.path),preamble:{enabled:T.checked,mode:w.value,text:F.value},goal:{enabled:$.checked,text:N.value}},s=JSON.parse(localStorage.getItem("presets")||"{}");s[n]=e,localStorage.setItem("presets",JSON.stringify(s)),H(),k("Preset saved successfully!","success"),oe.value=""}function We(){if(!E){k("Please select a folder before loading a preset.","error");return}const n=M.value;if(!n){k("Please select a preset to load.");return}const e=JSON.parse(localStorage.getItem("presets")||"{}")[n];if(!e){k("Preset not found.");return}const s=f.querySelectorAll('input[type="checkbox"][data-type="file"]');s.forEach(i=>i.checked=!1);let o=[];e.files.forEach(i=>{const l=Array.from(s).find(c=>c.dataset.path===i);l?l.checked=!0:o.push(i)}),e.preamble&&(T.checked=e.preamble.enabled,be.classList.toggle("hidden",!e.preamble.enabled),w.value=e.preamble.mode,F.value=e.preamble.text||""),e.goal&&($.checked=e.goal.enabled,Ee.classList.toggle("hidden",!e.goal.enabled),N.value=e.goal.text||""),o.length>0?k(`Some files in this preset no longer exist: ${o.join(", ")}`,"error"):k("Preset loaded successfully!","success"),C(),L()}function Ne(){const n=M.value;if(!n){k("Please select a preset to delete.");return}const t=JSON.parse(localStorage.getItem("presets")||"{}");if(!t[n]){k("Preset not found.");return}delete t[n],localStorage.setItem("presets",JSON.stringify(t)),H(),k("Preset deleted successfully!","success")}async function Oe(){const n=localStorage.getItem("presets")||"{}",t=new Blob([n],{type:"application/json"}),e=URL.createObjectURL(t),s=document.createElement("a");s.href=e,s.download="presets.json",s.click(),URL.revokeObjectURL(e)}X.addEventListener("change",async n=>{const t=n.target.files[0];if(!t)return;const e=await t.text();try{const s=JSON.parse(e);localStorage.setItem("presets",JSON.stringify(s)),H(),p("Presets loaded successfully!","success")}catch{p("Invalid JSON file. Please ensure the file contains valid preset data.","error")}X.value=""});xe.addEventListener("click",Oe);me.addEventListener("click",async()=>{try{E=await window.showDirectoryPicker(),ne.textContent=`Selected folder: ${E.name}`,f.innerHTML="",A=[],v={},S(!0),await ee(E),await J(E),S(!1),H(),te(),q.classList.remove("hidden");const n=document.getElementById("folderWarning");n&&n.classList.add("hidden")}catch(n){console.error("Error selecting folder:",n),ne.textContent="Error selecting folder. Please try again.",S(!1);const t=document.getElementById("folderWarning");t&&t.classList.remove("hidden")}});fe.addEventListener("click",()=>{const t=Array.from(f.querySelectorAll('input[type="checkbox"][data-type="file"]')).filter(s=>s.closest(".tree-line").style.display!=="none"),e=t.every(s=>s.checked);t.forEach(s=>s.checked=!e),C(),L()});function C(){f.querySelectorAll('input[type="checkbox"][data-type="directory"]').forEach(t=>{const e=t.dataset.path,s=f.querySelectorAll(`input[type="checkbox"][data-type="file"][data-path^="${e}/"]`),o=Array.from(s).filter(i=>i.closest(".tree-line").style.display!=="none");o.length>0?t.checked=o.every(i=>i.checked):t.checked=!1})}f.addEventListener("change",n=>{const t=n.target;if(t.matches('input[type="checkbox"][data-type="directory"]')){const e=t.dataset.path;f.querySelectorAll(`input[type="checkbox"][data-type="file"][data-path^="${e}/"]`).forEach(o=>{o.closest(".tree-line").style.display!=="none"&&(!t.checked&&I.has(o.dataset.path)&&I.delete(o.dataset.path),o.checked=t.checked)})}else t.matches('input[type="checkbox"][data-type="file"]')&&!t.checked&&I.has(t.dataset.path)&&I.delete(t.dataset.path);C(),L()});async function ze(n){const t={};for(const s of n){const o=s.path.split("/");let i=t;for(let l=0;l<o.length;l++){const c=o[l];i[c]||(i[c]={__isFile:l===o.length-1,__size:s.size,__lines:s.lines}),l<o.length-1&&(i=i[c])}}function e(s,o="",i=!0){const l=Object.keys(s).filter(d=>!d.startsWith("__")).sort();let c=[];return l.forEach((d,u)=>{const b=s[d],B=u===l.length-1,y=B?"└── ":"├── ";if(b.__isFile){const x=(b.__size/1024).toFixed(2);c.push(o+y+d+` (Size: ${x}kb; Lines: ${b.__lines})`)}else{c.push(o+y+d+"/");const x=o+(B?"    ":"│   ");c=c.concat(e(b,x,B))}}),c}return e(t).join(`
+`)}async function De(n,t){const e=n.toLowerCase();if(e.endsWith(".js")||e.endsWith(".jsx")||e.endsWith(".mjs")||e.endsWith(".cjs")||e.endsWith(".ts")||e.endsWith(".tsx"))try{return(await Terser.minify(t)).code||t}catch{return t}else if(e.endsWith(".css"))try{return csso.minify(t).css||t}catch{return t}else if(e.endsWith(".html")||e.endsWith(".htm"))try{return htmlMinifierTerser.minify(t,{collapseWhitespace:!0,removeComments:!0,minifyCSS:!0,minifyJS:!0})}catch{return t}else if(e.endsWith(".json"))try{const s=JSON.parse(t);return JSON.stringify(s)}catch{return t}else return t.split(`
+`).map(s=>s.trimEnd()).join(`
+`)}function re(n,t){const e=n.toLowerCase();let o=t.split(`
+`).join(`
+`);return e.endsWith(".js")||e.endsWith(".jsx")||e.endsWith(".ts")||e.endsWith(".tsx")||e.endsWith(".java")||e.endsWith(".go")||e.endsWith(".c")||e.endsWith(".cpp")||e.endsWith(".h")||e.endsWith(".rs")||e.endsWith(".php")?(o=o.replace(/\/\*[\s\S]*?\*\//g,""),o=o.replace(/(^|\s)\/\/.*$/gm,"")):e.endsWith(".py")||e.endsWith(".rb")?o=o.replace(/^\s*#.*$/gm,""):e.endsWith(".html")||e.endsWith(".htm")?o=o.replace(/\x3C!--[\s\S]*?-->/g,""):e.endsWith(".css")?o=o.replace(/\/\*[\s\S]*?\*\//g,""):e.endsWith(".jsx")||e.endsWith(".tsx"),o.split(`
+`).map(l=>l.trimEnd()).join(`
+`)}pe.addEventListener("click",async()=>{const n=Array.from(f.querySelectorAll('input[type="checkbox"]:checked[data-type="file"]')).map(t=>t.dataset.path);if(n.length===0){p("Please select at least one text file");return}S(!0,"Combining selected files...");try{const t=[];let e=0,s=0;for(const a of n){D.textContent=`Processing: ${a}`;const r=A.find(g=>g.path===a);if(!r)continue;const h=await(await r.handle.getFile()).text();t.push({path:a,content:h,size:r.size,lines:r.lines}),e+=r.size,s+=r.lines}let o="";T.checked&&F.value.trim()&&(o+=F.value.trim()+`
+
+`),$.checked&&N.value.trim()&&(o+=`Goal:
+`+N.value.trim()+`
+
+`);const i=await ze(t);i.trim()&&(o+=`Project Structure:
+`+i+`
+
+`);let l="",c=0,d=0,u=0,b=0;for(const a of t){let r=a.content.trim();z.checked&&(r=re(a.path,r));const m=r.split(`
+`).length,h=new Blob([r]).size;c+=h,d+=m}let B=t.map(a=>{let r=a.content.trim();return z.checked&&(r=re(a.path,r)),{path:a.path,content:r}});if(Y.checked){let a=[];for(const r of B){let m=await De(r.path,r.content);a.push({path:r.path,content:m})}B=a}for(const a of B)l+=`---
+${a.path}
+---
+${a.content}
+
+`;const y=new Blob([l]).size,x=l.split(`
+`).length;if(o+=l.trim(),Z.value=o,se.classList.remove("hidden"),p("Files combined successfully!","success"),se.scrollIntoView({behavior:"smooth",block:"start"}),z.checked){const a=((e-c)/1024).toFixed(2),r=((e-c)/e*100).toFixed(1),m=s-d,h=(m/s*100).toFixed(1);Q.textContent=`Removing comments saved ${a} KB (${r}%) and ${m} lines (${h}%)`,Q.classList.remove("hidden")}else Q.classList.add("hidden");if(Y.checked){const a=((c-y)/1024).toFixed(2),r=((c-y)/c*100).toFixed(1),m=d-x,h=(m/d*100).toFixed(1);V.textContent=`Minifying the outputs saved ${a} KB (${r}%) and ${m} lines (${h}%)`,V.classList.remove("hidden")}else V.classList.add("hidden")}catch(t){p("Error combining files: "+t.message)}finally{S(!1)}});Pe.addEventListener("click",()=>{const n=new Blob([Z.value],{type:"text/plain"}),t=URL.createObjectURL(n),e=document.createElement("a");e.href=t,e.download="combined_files.txt",e.click(),URL.revokeObjectURL(t)});we.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(Z.value),p("Combined text copied to clipboard!","success")}catch(n){p("Failed to copy: "+n.message)}});const q=document.getElementById("refreshBtn");q.addEventListener("click",async()=>{if(!E){p("Please select a folder first before refreshing.","error");return}const n=new Set(Array.from(f.querySelectorAll('input[type="checkbox"]:checked[data-type="file"]')).map(t=>t.dataset.path));f.innerHTML="",A=[],v={},S(!0,"Refreshing folder contents...");try{await ee(E),await J(E),f.querySelectorAll('input[type="checkbox"][data-type="file"]').forEach(e=>{n.has(e.dataset.path)&&(e.checked=!0)}),C(),L(),q.classList.remove("hidden"),p("Folder refreshed successfully!","success"),te()}catch(t){console.error("Error refreshing folder:",t),p("Error refreshing folder: "+t.message,"error")}finally{S(!1)}});he.addEventListener("click",Ae);ge.addEventListener("click",We);ye.addEventListener("click",Ne);function te(){tippy("[data-tippy-content]",{theme:"light-border",delay:[200,100],maxWidth:250})}function L(){const n=Array.from(f.querySelectorAll('input[type="checkbox"][data-type="file"]:checked'));let t=0,e=0;for(const l of n){const c=A.find(d=>d.path===l.dataset.path);c&&(t+=c.size,e+=c.lines)}const s=parseFloat(ie.textContent.replace(" KB",""))||0,o=t/1024;ae(ie,s,o," KB",2);const i=parseInt(le.textContent.replace(/,/g,""),10)||0;ae(le,i,e,"",0),t/1024>500?K.textContent="Warning: probably too large to fit in Claude 3.5 Sonnet context window!":t/1024>200?K.textContent="Warning: probably too large to fit in GPT-4o or o1 context window!":K.textContent=""}function ae(n,t,e,s,o){let i=Number(t);const l=Number(e);if(isNaN(i)&&(i=0),isNaN(l)){n.textContent=0 .toLocaleString(void 0,{minimumFractionDigits:o,maximumFractionDigits:o})+s;return}const c=(l-i)/30;function d(){i+=c;let u=!1;c===0?(u=!0,i=l):c>0?i>=l&&(i=l,u=!0):i<=l&&(i=l,u=!0),n.textContent=Number(i).toLocaleString(void 0,{minimumFractionDigits:o,maximumFractionDigits:o})+s,u||requestAnimationFrame(d)}requestAnimationFrame(d)}f.addEventListener("change",L);_.addEventListener("input",Ce);ve.addEventListener("click",()=>{_.value="",Ce()});function Ce(){const n=_.value.toLowerCase().trim();if(!n){for(const e in v)v[e].style.display="";C();return}for(const e in v)v[e].style.display="none";Object.keys(v).filter(e=>e.toLowerCase().includes(n)).forEach(e=>{let s=e.split("/"),o="";for(let i=0;i<s.length;i++)o=i===0?s[i]:o+"/"+s[i],v[o]&&(v[o].style.display="")}),C()}const Me={js:[".js",".mjs",".cjs"],react:[".jsx",".tsx"],ts:[".ts",".tsx"],json:[".json"],md:[".md"],py:[".py"],go:[".go"],java:[".java"],rb:[".rb"],php:[".php"],rs:[".rs"]};Be.forEach(n=>{n.addEventListener("click",()=>{const t=n.dataset.filterType,e=Me[t]||[],s=f.querySelectorAll('input[type="checkbox"][data-type="file"]');for(const o of s){const i=o.dataset.path.toLowerCase();e.some(l=>i.endsWith(l))&&(o.checked||(o.checked=!0,I.add(o.dataset.path)))}C(),L()})});ke.addEventListener("click",()=>{const n=f.querySelectorAll('input[type="checkbox"][data-type="file"]');for(const t of n)I.has(t.dataset.path)&&(t.checked=!1);I.clear(),C(),L()});const O=document.getElementById("customTextExtensionsInput"),de=document.getElementById("addCustomTextExtensionsBtn");O&&de&&de.addEventListener("click",async()=>{const n=O.value.trim();if(!n){p("Please enter one or more extensions (e.g., .mdc, .ext2)","error");return}const t=n.split(",").map(s=>{let o=s.trim().toLowerCase();return o&&!o.startsWith(".")&&(o="."+o),o}).filter(s=>s.length>1&&s.startsWith(".")).filter(s=>!j.includes(s));if(t.length===0){p("No valid new extensions to add, or extensions already added/empty.","error"),O.value="";return}j.push(...t),$e(),O.value="",R&&!R.classList.contains("hidden")&&Ie(),p(`Added extensions: ${t.join(", ")}. Refreshing folder if one is selected...`,"success");const e=document.getElementById("refreshBtn");if(E&&e&&!e.classList.contains("hidden"))e.click();else if(E){S(!0,"Re-evaluating file types and refreshing folder...");try{f.innerHTML="",A=[],v={},await ee(E),await J(E),C(),L(),te(),p("Folder refreshed with new extensions.","success")}catch(s){console.error("Error during manual refresh for custom extensions:",s),p("Error re-evaluating files: "+s.message,"error")}finally{S(!1)}}else p(`Added extensions: ${t.join(", ")}. Select or re-select a folder to apply.`,"info")});const ue=document.getElementById("showTextExtensionsBtn"),R=document.getElementById("textExtensionsDropdown"),Le=document.getElementById("textExtensionsList");function qe(){const n=[".txt",".md",".csv",".js",".css",".html",".json",".xml",".yaml",".yml",".ini",".log",".sh",".bash",".py",".java",".cpp",".c",".h",".config",".env",".gitignore",".sql",".ts",".tsx",".schema",".mjs",".cjs",".jsx",".rs",".go",".php",".rb",".toml",".prisma",".bat",".ps1",".svelte",".lock"],t=Array.from(new Set(n.concat(j)));return t.sort(),t}function Ie(){const n=qe();Le.textContent=n.join(", ")}ue&&R&&Le&&ue.addEventListener("click",()=>{Ie(),R.classList.toggle("hidden")});</script>
+  <style rel="stylesheet" crossorigin>.tree-indent{padding-left:1.5rem}.tree-line{position:relative}.tree-line:before{content:"";position:absolute;left:-1.25rem;top:.7rem;width:.75rem;height:1px;background:#cbd5e0}.tree-line:after{content:"";position:absolute;left:-1.25rem;top:0;width:1px;height:100%;background:#cbd5e0}.tree-last:after{height:.7rem}.fileTree{max-height:calc(100vh - 22rem);overflow-y:auto}.fade-enter{opacity:0;transition:opacity .3s}.fade-enter-active{opacity:1}.action-button{transition:all .2s ease-in-out}.action-button:hover{filter:brightness(90%)}.tally-container{position:fixed;top:1rem;right:1rem;z-index:9999;background:#ffffffe6;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:.75rem 1rem;border-radius:8px;text-align:right;display:flex;flex-direction:column;gap:.375rem;min-width:150px}.transition-number{font-weight:500;color:#1a1a1a}.tally-message{color:#dc2626;font-weight:500;font-size:.875rem;padding-top:.25rem;margin-top:.25rem;border-top:1px solid rgba(0,0,0,.1)}.tally-number{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-weight:500;color:#000}.combine-button-container{position:sticky;bottom:2rem;left:0;right:0;text-align:center;padding:1rem;z-index:999;pointer-events:none}.combine-button{pointer-events:auto;background:linear-gradient(45deg,#22c55e,#16a34a);color:#fff;padding:1rem 2rem;border-radius:.5rem;font-weight:700;transform:scale(1.1);box-shadow:0 0 20px #22c55e66;border:2px solid rgba(255,255,255,.2);animation:pulse 2s infinite;transition:all .3s ease}.combine-button:hover{transform:scale(1.15);box-shadow:0 0 30px #22c55e99}@keyframes pulse{0%{box-shadow:0 0 20px #22c55e66}50%{box-shadow:0 0 30px #22c55e99}to{box-shadow:0 0 20px #22c55e66}}.search-container{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}.bg-blue-500:hover,.bg-green-500:hover,.bg-purple-500:hover,.bg-red-500:hover,.bg-yellow-500:hover{color:#fff!important}.error-message{animation:fadeIn .3s ease-in-out}.message-container{position:fixed;top:2rem;left:50%;transform:translate(-50%);z-index:1001;min-width:300px;max-width:600px;animation:fadeIn .3s ease-in-out}@keyframes fadeIn{0%{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}.dropdown{position:relative;display:inline-block}.dropdown-content{display:none;position:absolute;background:#fff;min-width:200px;box-shadow:0 4px 8px #0000001a;z-index:10;border-radius:.5rem;overflow:hidden}.dropdown-content button{display:block;width:100%;text-align:left;padding:.5rem 1rem;background:#fff;border:none;cursor:pointer;font-size:.875rem;font-weight:500}.dropdown-content button:hover{background:#ccc}.dropdown:hover .dropdown-content{display:block}html.dark,html.dark body{background-color:#1e1e1e;color:#e5e5e5}html.dark .bg-gray-100{background-color:#1e1e1e!important}html.dark .bg-white{background-color:#2e2e2e!important}html.dark .text-black{color:#fff!important}html.dark .text-gray-800{color:#ccc!important}html.dark .text-gray-400{color:#888!important}html.dark .text-gray-600{color:#aaa!important}html.dark .text-gray-700{color:#bbb!important}html.dark .bg-gray-300{background-color:#444!important}html.dark .bg-gray-50{background-color:#333!important}html.dark .border-gray-300{border-color:#555!important}html.dark .border-gray-100{border-color:#444!important}html.dark .tally-container{background:#1e1e1ee6}html.dark .text-red-700{color:#faa!important}html.dark .bg-red-100{background:#3e1e1e!important}html.dark .bg-green-100{background:#1e3e1e!important}html.dark .bg-yellow-100{background:#3e3e1e!important}html.dark .text-yellow-800{color:#ffa!important}html.dark .bg-green-500{background-color:#16a34a!important}html.dark .bg-green-500:hover{background-color:#15803d!important}html.dark input,html.dark select,html.dark textarea{background-color:#3a3a3a!important;color:#e5e5e5!important;border-color:#555!important}html.dark .folder-name{color:#90caf9!important}html.dark .transition-number,html.dark .tally-number{color:#e5e5e5!important}.dark-mode-toggle{position:fixed;top:.5rem;left:.5rem;z-index:10000;background:#ffffffe6;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border-radius:50%;width:2.5rem;height:2.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer}html.dark .dark-mode-toggle{background:#1e1e1ee6}html.dark .dropdown-content,html.dark .dropdown-content button{background:#3a3a3a!important;color:#e5e5e5!important}html.dark .dropdown-content button:hover{background:#555!important}#textExtensionsDropdown{transition:all .2s;z-index:100}#textExtensionsDropdown pre{background:#f3f4f6;color:#1a1a1a;border-radius:.375rem;padding:.5rem;margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.95em;max-height:200px;overflow-y:auto}html.dark #textExtensionsDropdown pre{background:#18181b;color:#e5e5e5}#copyTextExtensionsBtn{cursor:pointer}</style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="dark-mode-toggle" id="darkModeToggle" data-tippy-content="Toggle dark mode."><i class="fas fa-sun"></i></div>
+    <div id="globalMessage" class="message-container hidden" data-tippy-content="This area displays notifications or alerts, which disappear after a few seconds."></div>
+    <div class="tally-container">
+        <div data-tippy-content="Displays the total combined size of all currently selected text files.">
+            <span>Total size:</span>
+            <span id="totalSizeDisplay" class="transition-number" data-tippy-content="The aggregated file size of all selected files.">0 KB</span>
+        </div>
+        <div data-tippy-content="Displays the total line count from all currently selected files.">
+            <span>Total lines:</span>
+            <span id="totalLinesDisplay" class="transition-number" data-tippy-content="Line counts help gauge complexity and length.">0</span>
+        </div>
+        <div id="tallyWarning" class="tally-message" data-tippy-content="This message warns if your selection might be too large for certain model context windows."></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 flex items-center gap-2 mr-64" data-tippy-content="Welcome! Select a folder, filter and select files, then combine them into a single output.">
+            <i class="fas fa-folder-open text-blue-600"></i>
+            Local Codebase To Prompt
+        </h1>
+        
+        <div class="bg-white rounded-lg shadow p-6 space-y-6 animate__animated animate__fadeIn" >
+            <div class="flex items-center gap-4">
+                <button id="folderBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2" data-tippy-content="Click to choose the root folder on your machine.">
+                    <i class="fas fa-folder-plus"></i>
+                    Select Folder
+                </button>
+                <button id="refreshBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2 hidden" data-tippy-content="Refresh the folder contents without changing selections or settings.">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh Folder
+                </button>
+                <div class="text-gray-600 italic" id="selectedPath" data-tippy-content="Shows the path of the folder you've selected. Empty if none chosen."></div>
+            </div>
+            <div class="text-gray-600 italic" id="gitignoreStatus" data-tippy-content="Indicates whether a .gitignore or default ignores are applied to filter out certain files."></div>
+            
+            <div id="loadingIndicator" class="hidden" data-tippy-content="Loading... Shows progress while scanning or processing files.">
+                <div class="flex items-center gap-3 text-blue-600 mb-4">
+                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" data-tippy-content="Indicates ongoing processing.">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="loadingText">Processing folder contents...</span>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="filterInput" placeholder="Filter by file/folder name..." class="border p-2 rounded flex-grow" data-tippy-content="Type to filter. Only matching files/folders remain visible.">
+                <button id="clearFilterBtn" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400 flex items-center gap-2" data-tippy-content="Clear the current filter and restore all files.">
+                    Clear Filter
+                </button>
+            </div>
+            
+            <div id="fileTree" class="mb-4 max-h-96 overflow-y-auto font-mono text-sm bg-gray-50 p-4 rounded fileTree animate__animated animate__fadeIn" data-tippy-content="This is your project file tree. Check files to select them for the combined output."></div>
+            
+            <div class="flex flex-wrap gap-4">
+                <button id="selectAllBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2" data-tippy-content="Select or deselect all currently visible text files.">
+                    <i class="fas fa-check-double"></i>
+                    Toggle Select All Text Files
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-4 mt-4 items-center">
+                <h2 class="text-lg font-semibold flex items-center gap-2" data-tippy-content="Use these presets to quickly select common file types.">
+                    <i class="fas fa-filter text-yellow-500"></i>
+                    File Type Filters
+                </h2>
+
+                <div class="dropdown" data-tippy-content="Hover to see various file type filters. Clicking one selects all files of that type.">
+                    <button class="bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500 flex items-center gap-2">
+                        <i class="fas fa-caret-down"></i>
+                        Show Filters
+                    </button>
+                    <div class="dropdown-content" >
+                        <button data-filter-type="js" data-tippy-content="Select all JavaScript files (.js, .mjs, .cjs).">Select all JavaScript files</button>
+                        <button data-filter-type="react" data-tippy-content="Select all React component files (.jsx, .tsx).">Select all React Components</button>
+                        <button data-filter-type="ts" data-tippy-content="Select all TypeScript files (.ts, .tsx).">Select all TypeScript files</button>
+                        <button data-filter-type="json" data-tippy-content="Select all JSON files (.json).">Select all JSON files</button>
+                        <button data-filter-type="md" data-tippy-content="Select all Markdown files (.md).">Select all Markdown files</button>
+                        <button data-filter-type="py" data-tippy-content="Select all Python files (.py).">Select all Python files</button>
+                        <button data-filter-type="go" data-tippy-content="Select all Go files (.go).">Select all Go files</button>
+                        <button data-filter-type="java" data-tippy-content="Select all Java files (.java).">Select all Java files</button>
+                        <button data-filter-type="rb" data-tippy-content="Select all Ruby files (.rb).">Select all Ruby files</button>
+                        <button data-filter-type="php" data-tippy-content="Select all PHP files (.php).">Select all PHP files</button>
+                        <button data-filter-type="rs" data-tippy-content="Select all Rust files (.rs).">Select all Rust files</button>
+                    </div>
+                </div>
+
+                <button id="clearFilterSelectionsBtn" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600" data-tippy-content="Clear all selections made by file type filters, keeping any manually checked files.">
+                    Clear Filter-Based Selections
+                </button>
+            </div>
+
+            <div class="combine-button-container" >
+                <button id="combineBtn" class="combine-button flex items-center gap-2 mx-auto" data-tippy-content="Combine all selected files into a single output.">
+                    <i class="fas fa-file-medical"></i>
+                    Combine Selected Files
+                </button>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-2 space-y-2 animate__animated animate__fadeIn">
+                <h2 class="text-lg font-semibold flex items-center gap-2" >
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                    Additional Options
+                </h2>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="includePreamble" data-tippy-content="Check to add a custom or predefined preamble before the combined files.">
+                        <label for="includePreamble" class="font-semibold" data-tippy-content="A preamble introduces the combined content.">Include Preamble</label>
+                    </div>
+                    <div id="preambleOptions" class="space-y-2 hidden" data-tippy-content="Choose a preamble template or write your own.">
+                        <select id="preambleSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" data-tippy-content="Select a predefined preamble or 'custom' to write your own.">
+                            <option value="custom">Custom</option>
+                            <option value="The following are the complete project code files for my NextJS 15 app.">The following are the complete project code files for my NextJS 15 app.</option>
+                            <option value="Below is a comprehensive collection of the project's source files.">Below is a comprehensive collection of the project's source files.</option>
+                        </select>
+                        <textarea id="customPreamble" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[5rem]" placeholder="Write your preamble here..." data-tippy-content="If 'custom' is selected, type your own preamble here."></textarea>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="includeGoal" data-tippy-content="Check to include a goal or objective statement in your output.">
+                        <label for="includeGoal" class="font-semibold" data-tippy-content="A goal clarifies what you want to achieve with these files.">Include Goal</label>
+                    </div>
+                    <div id="goalOptions" class="hidden" data-tippy-content="If enabled, type your goal here.">
+                        <textarea id="goalText" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[5rem]" placeholder="Describe your goal here..." data-tippy-content="Explain the purpose or aim of combining these files."></textarea>
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700 mt-4">
+                    <h3 class="font-semibold flex items-center gap-2" data-tippy-content="Define additional file extensions (e.g., .mdc) to be treated as text files. Comma-separated.">
+                        <i class="fas fa-file-code text-teal-500"></i> Custom Text File Extensions
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="customTextExtensionsInput" placeholder="e.g., .mdc, .myext" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500">
+                        <button id="addCustomTextExtensionsBtn" class="action-button bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 flex items-center gap-2" data-tippy-content="Add these extensions and refresh the folder view if a folder is loaded.">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Added extensions are saved locally. Ensure extensions start with a dot (e.g., ".mdc").</p>
+
+                    <!-- New: Dropdown for recognized text file extensions -->
+                    <div class="mt-4">
+                        <button id="showTextExtensionsBtn" class="bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500 flex items-center gap-2">
+                            <i class="fas fa-list"></i>
+                            Show recognized text file extensions
+                        </button>
+                        <div id="textExtensionsDropdown" class="hidden bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded mt-2 p-4 shadow max-w-xl">
+                            <span class="font-semibold">Recognized text file extensions:</span>
+                            <pre id="textExtensionsList" class="whitespace-pre-wrap break-words text-sm bg-gray-100 dark:bg-gray-900 p-2 rounded"></pre>
+                        </div>
+                    </div>
+                    <!-- End new dropdown -->
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-2 space-y-2 animate__animated animate__fadeIn">
+                <h2 class="text-lg font-semibold flex items-center gap-2" >
+                    <i class="fas fa-scissors text-red-500"></i>
+                    Remove Code Comments
+                </h2>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="removeComments" data-tippy-content="Check to remove code comments from supported file types to save space.">
+                    <label for="removeComments" class="font-semibold" data-tippy-content="Removing comments can help save space in the model's context window.">Remove Code Comments</label>
+                </div>
+                <div id="commentStats" class="text-sm text-gray-700 hidden" data-tippy-content="Shows how much size and lines are saved after removing comments."></div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-2 space-y-2 animate__animated animate__fadeIn" >
+                <h2 class="text-lg font-semibold flex items-center gap-2" >
+                    <i class="fas fa-compress text-green-500"></i>
+                    Minify/Compress Options
+                </h2>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="minifyOutput" data-tippy-content="Check to minify JavaScript, CSS, HTML, JSON, etc. to reduce size.">
+                    <label for="minifyOutput" class="font-semibold" data-tippy-content="Minification can help fit more code into smaller model contexts.">Minify Combined Output</label>
+                </div>
+                <div id="minifyStats" class="text-sm text-gray-700 hidden" data-tippy-content="Shows how much size and lines are saved after minification."></div>
+            </div>
+
+            <div class="border-t pt-4 space-y-4" >
+                <h2 class="text-lg font-semibold flex items-center gap-2" >
+                    <i class="fas fa-save text-purple-500"></i>
+                    Presets
+                </h2>
+                <div id="folderWarning" class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-4" data-tippy-content="Select a folder before using presets.">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Please select a folder first to use presets.
+                </div>
+                <p class="text-sm text-gray-600" data-tippy-content="Presets store your file selections and settings so you can quickly reapply them later.">
+                    Use presets to store and reload sets of selected files and options.
+                </p>
+                
+                <div id="presetMessage" class="hidden rounded-lg p-4 mb-4 text-sm" data-tippy-content="Messages about preset actions will appear here."></div>
+                
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                    <input type="text" id="presetName" placeholder="Enter preset name"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                    data-tippy-content="Name your preset. Examples: 'FrontendFiles', 'BackendSelection'.">
+                    <button id="savePresetBtn"
+                            class="action-button bg-purple-500 text-white px-4 py-2 rounded"
+                            data-tippy-content="Save your current selection and options under the given preset name.">
+                        <i class="fas fa-bookmark"></i>
+                        Save Preset
+                    </button>
+                </div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                    <select id="presetSelect" class="border p-2 rounded w-full sm:w-1/2" data-tippy-content="Select a previously saved preset from the list.">
+                        <option value="">Select a preset</option>
+                    </select>
+                    <button id="loadPresetBtn" 
+                            class="action-button bg-purple-500 text-white px-4 py-2 rounded"
+                            data-tippy-content="Load the selected preset's files and options.">
+                        <i class="fas fa-folder-open"></i>
+                        Load Preset
+                    </button>
+                    <button id="deletePresetBtn"
+                            class="action-button bg-red-500 text-white px-4 py-2 rounded"
+                            data-tippy-content="Delete the currently selected preset.">
+                        <i class="fas fa-trash"></i>
+                        Delete Preset
+                    </button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                    <button id="exportPresetsBtn"
+                            class="action-button bg-yellow-500 text-white px-4 py-2 rounded"
+                            data-tippy-content="Export all your presets as a JSON file.">
+                        <i class="fas fa-download"></i>
+                        Save Presets to JSON File
+                    </button>
+                    <label class="action-button bg-yellow-500 text-white px-4 py-2 rounded cursor-pointer" for="importPresetsInput" data-tippy-content="Import presets from a JSON file.">
+                        <i class="fas fa-upload"></i>
+                        Load Presets from JSON File
+                        <input type="file" id="importPresetsInput" class="hidden" accept=".json" data-tippy-content="Select a JSON file containing presets.">
+                    </label>
+                </div>
+                
+                <div id="missingFilesAlert" class="hidden text-red-600 text-sm" data-tippy-content="If preset files are missing, this alert shows which ones."></div>
+            </div>
+        </div>
+
+        <div id="output" class="bg-white rounded-lg shadow p-6 hidden space-y-4 animate__animated animate__fadeIn" data-tippy-content="Your combined output will appear here. Review, then copy or download it.">
+            <h2 class="text-xl font-bold flex items-center gap-2" data-tippy-content="This is your final combined file.">
+                <i class="fas fa-file-alt text-green-500"></i>
+                Combined Output
+            </h2>
+            <textarea id="combinedOutput" class="w-full h-96 p-2 border rounded font-mono text-sm" readonly data-tippy-content="This shows the combined text from all selected files."></textarea>
+            <div class="flex gap-4" data-tippy-content="Use these buttons to download or copy the combined output.">
+                <button id="downloadBtn" class="mt-4 bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 flex items-center gap-2" data-tippy-content="Download the combined result as a text file.">
+                    <i class="fas fa-download"></i>
+                    Download Combined File
+                </button>
+                <button id="copyBtn" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2" data-tippy-content="Copy the combined text to your clipboard.">
+                    <i class="fas fa-copy"></i>
+                    Copy Combined Text to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/terser@5.14.2/dist/bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-minifier-terser@7.0.0/dist/html-minifier-terser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/csso@5.0.5/dist/csso.min.js"></script>
+    <script>
+        // Make dark mode the default
+        localStorage.setItem('darkModeEnabled', 'true');
+        document.documentElement.classList.add('dark');
+    </script>
+    <script>
+        tippy('[data-tippy-content]', {
+            theme: 'light-border',
+            delay: [200, 100],
+            maxWidth: 250,
+        });
+    </script>
+</body>
+</html> 
