@@ -12,6 +12,11 @@ You have two options to use LocalCodebaseToPrompt:
 ## Browser Compatibility
 For best results, use a Chromium-based browser that fully supports the File System Access API, and make sure it is not restricted in the browser settings.
 
+## Screenshot
+<div align="center">
+   <img src="https://github.com/user-attachments/assets/121fea3a-66be-4996-b23c-cef4156e28c8" alt="image" style="width: 75%;">
+</div>
+
 ## Notes about this fork
 This project extends the excellent [your-source-to-prompt.html](https://github.com/Dicklesworthstone/your-source-to-prompt.html), originally created by Dicklesworthstone.
 
