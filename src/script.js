@@ -1098,6 +1098,7 @@ if (customTextExtensionsInput && addCustomTextExtensionsBtn) {
         const newExtensions = rawInput.split(',')
             .map(ext => {
                 let cleanedExt = ext.trim().toLowerCase();
+                // Add dot if missing
                 if (cleanedExt && !cleanedExt.startsWith('.')) {
                     cleanedExt = '.' + cleanedExt;
                 }
@@ -1115,6 +1116,11 @@ if (customTextExtensionsInput && addCustomTextExtensionsBtn) {
         userAddedTextExtensions.push(...newExtensions);
         saveCustomExtensions(); // Save to localStorage
         customTextExtensionsInput.value = ''; // Clear input
+        
+        // Update the dropdown list if it's open
+        if (textExtensionsDropdown && !textExtensionsDropdown.classList.contains('hidden')) {
+            updateTextExtensionsList();
+        }
         
         showGlobalMessage(`Added extensions: ${newExtensions.join(', ')}. Refreshing folder if one is selected...`, 'success');
 
@@ -1145,5 +1151,39 @@ if (customTextExtensionsInput && addCustomTextExtensionsBtn) {
         } else {
             showGlobalMessage(`Added extensions: ${newExtensions.join(', ')}. Select or re-select a folder to apply.`, 'info');
         }
+    });
+}
+
+// --- Text File Extensions Dropdown Logic ---
+const showTextExtensionsBtn = document.getElementById('showTextExtensionsBtn');
+const textExtensionsDropdown = document.getElementById('textExtensionsDropdown');
+const textExtensionsList = document.getElementById('textExtensionsList');
+
+function getAllTextExtensions() {
+    // These should match the initialTextExtensions in isTextFile
+    const initialTextExtensions = [
+        '.txt', '.md', '.csv', '.js', '.css', '.html', 
+        '.json', '.xml', '.yaml', '.yml', '.ini', '.log',
+        '.sh', '.bash', '.py', '.java', '.cpp', '.c', '.h',
+        '.config', '.env', '.gitignore', '.sql', '.ts',
+        '.tsx', '.schema', '.mjs', '.cjs', '.jsx', '.rs',
+        '.go', '.php', '.rb', '.toml', '.prisma', '.bat', '.ps1',
+        '.svelte', '.lock'
+    ];
+    // Add user-added extensions
+    const all = Array.from(new Set(initialTextExtensions.concat(userAddedTextExtensions)));
+    all.sort();
+    return all;
+}
+
+function updateTextExtensionsList() {
+    const all = getAllTextExtensions();
+    textExtensionsList.textContent = all.join(', ');
+}
+
+if (showTextExtensionsBtn && textExtensionsDropdown && textExtensionsList) {
+    showTextExtensionsBtn.addEventListener('click', () => {
+        updateTextExtensionsList();
+        textExtensionsDropdown.classList.toggle('hidden');
     });
 } 
