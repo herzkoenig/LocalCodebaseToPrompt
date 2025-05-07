@@ -1,0 +1,79 @@
+name: Build and Commit HTML if Source or Config Changed
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 
+
+      - name: Filter for source or build configuration changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            critical_files_changed:
+              - 'src/**'
+              - 'vite.config.js'
+              - 'package.json'
+              - 'package-lock.json'
+
+      - name: Set up Node.js
+        if: steps.filter.outputs.critical_files_changed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'package.json'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: steps.filter.outputs.critical_files_changed == 'true'
+        run: npm ci
+
+      - name: Build with Vite
+        if: steps.filter.outputs.critical_files_changed == 'true'
+        run: npm run build
+
+      - name: Move and Rename built file
+        if: steps.filter.outputs.critical_files_changed == 'true'
+        run: mv dist/src/index.html ./LocalCodebaseToPrompt-SingleFile.html
+
+      - name: Commit and Push if artifact changed (and critical files were modified)
+        if: steps.filter.outputs.critical_files_changed == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Use -f to force add the ignored file
+          git add -f ./LocalCodebaseToPrompt-SingleFile.html
+          
+          # Check if the LocalCodebaseToPrompt-SingleFile.html itself has changed
+          if git diff --staged --quiet; then
+            echo "No changes to LocalCodebaseToPrompt-SingleFile.html after build, no commit needed."
+          else
+            echo "Changes detected in LocalCodebaseToPrompt-SingleFile.html. Committing..."
+            # Using a descriptive commit message
+            git commit -m "feat: Update LocalCodebaseToPrompt-SingleFile.html [skip ci]" \
+                       -m "Automated build due to changes in source or build configuration."
+            git push
+            echo "LocalCodebaseToPrompt-SingleFile.html committed and pushed."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload SingleFile HTML as artifact
+        if: steps.filter.outputs.critical_files_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LocalCodebaseToPrompt-SingleFile
+          path: ./LocalCodebaseToPrompt-SingleFile.html
+          if-no-files-found: error
